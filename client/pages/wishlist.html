@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeBDe — Saved Wishlist</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+  <!-- Auth Guard: Redirects immediately to auth.html if not logged in -->
+  <div hx-get="/api/auth/check" hx-trigger="load"></div>
+  <script>
+    if (!document.cookie.includes('debde_token=')) {
+      window.location.href = 'auth.html';
+    }
+  </script>
+
+  <header class="site-header">
+    <div class="container navbar">
+      <div class="brand-logo">DeBDe</div>
+      <ul class="nav-menu">
+        <li><a href="../index.html" class="nav-link">Home</a></li>
+        <li><a href="catalog.html" class="nav-link">Catalog</a></li>
+        <li><a href="manage-listings.html" class="nav-link">Dashboard</a></li>
+        <li><a href="wishlist.html" class="nav-link active">Wishlist</a></li>
+        <li id="nav-auth-slot" hx-get="/api/auth/nav" hx-trigger="load" hx-swap="outerHTML">
+          <a href="auth.html" class="btn btn-secondary btn-sm">Sign In</a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="container section-padding">
+    <div class="card">
+      <h2 style="margin-bottom: 20px;">Saved Academic Gear & Textbooks</h2>
+      
+      <!-- Loaded dynamically via HTMX -->
+      <div class="row" hx-get="/api/wishlist" hx-trigger="load" hx-swap="innerHTML">
+        <div style="text-align: center; color: #64748b; padding: 20px; width: 100%;">
+          Loading saved wishlist...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      DeBDe &copy; 2026
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

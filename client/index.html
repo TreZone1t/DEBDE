@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeBDe — Student Tool Exchange</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+
+  <!-- Campus Announcements Ticker (Subsystem 1 - Ahmed Alaaeldin) -->
+  <div id="announcement-slot" hx-get="/api/announcements" hx-trigger="load" hx-swap="outerHTML"></div>
+
+  <header class="site-header">
+    <div class="container navbar">
+      <div class="brand-logo">DeBDe</div>
+      <ul class="nav-menu">
+        <li><a href="index.html" class="nav-link active">Home</a></li>
+        <li><a href="pages/catalog.html" class="nav-link">Catalog</a></li>
+        <li><a href="pages/manage-listings.html" class="nav-link">Dashboard</a></li>
+        <li><a href="pages/wishlist.html" class="nav-link">Wishlist</a></li>
+        <!-- Dynamic Navbar Auth Slot -->
+        <li id="nav-auth-slot" hx-get="/api/auth/nav" hx-trigger="load" hx-swap="outerHTML">
+          <a href="pages/auth.html" class="btn btn-secondary btn-sm">Sign In</a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="hero-section">
+    <div class="container">
+      <h1 class="hero-headline">Campus Peer-to-Peer Tool Exchange</h1>
+      <p class="hero-subtext">Buy, swap, or donate course materials and tools directly on campus</p>
+
+      <form class="search-box" action="pages/catalog.html" method="GET">
+        <input type="text" class="search-input" name="q" placeholder="Search for tools, books, or equipment...">
+        <button type="submit" class="search-btn">Search</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="container section-padding">
+    <h2 style="margin-bottom: 20px;">Recent Campus Listings</h2>
+    
+    <!-- Dynamic Items loaded via HTMX from Mock Server (No Hardcoded data) -->
+    <div class="row" hx-get="/api/items/feed" hx-trigger="load" hx-swap="innerHTML">
+      <div style="text-align: center; color: #64748b; padding: 20px; width: 100%;">
+        Loading campus items...
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal-content">
+      <button class="modal-close js-close-modal">&times;</button>
+      <h3 style="margin-bottom: 15px;">Student Login</h3>
+      <form onsubmit="event.preventDefault(); document.getElementById('loginModal').classList.remove('active');">
+        <div class="form-group">
+          <label class="form-label">University Email</label>
+          <input type="email" class="form-control" placeholder="student@ejust.edu.eg" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      DeBDe &copy; 2026 — Network and Web Programming Project (CNC111)
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeBDe — Student Dashboard</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+  <!-- Auth Guard: Redirects immediately to auth.html if not logged in -->
+  <div hx-get="/api/auth/check" hx-trigger="load"></div>
+  <script>
+    if (!document.cookie.includes('debde_token=')) {
+      window.location.href = 'auth.html';
+    }
+  </script>
+
+  <header class="site-header">
+    <div class="container navbar">
+      <div class="brand-logo">DeBDe</div>
+      <ul class="nav-menu">
+        <li><a href="../index.html" class="nav-link">Home</a></li>
+        <li><a href="catalog.html" class="nav-link">Catalog</a></li>
+        <li><a href="manage-listings.html" class="nav-link active">Dashboard</a></li>
+        <li><a href="wishlist.html" class="nav-link">Wishlist</a></li>
+        <li id="nav-auth-slot" hx-get="/api/auth/nav" hx-trigger="load" hx-swap="outerHTML">
+          <a href="auth.html" class="btn btn-secondary btn-sm">Sign In</a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="container section-padding">
+    <div class="row">
+      <!-- Dynamic Student Sidebar via HTMX and JWT session -->
+      <div class="col-sidebar" hx-get="/api/auth/me" hx-trigger="load" hx-swap="innerHTML">
+        <div class="card" style="text-align: center; color: #64748b; padding: 20px;">
+          Checking student session...
+        </div>
+      </div>
+
+      <div class="col-main">
+        <div class="card">
+          <div style="margin-bottom: 20px;">
+            <h2 style="display: inline-block;">Manage My Listings</h2>
+            
+            <!-- Filter buttons trigger HTMX requests to mock server -->
+            <div style="float: right;">
+              <button class="btn btn-secondary btn-sm" hx-get="/api/items/manage?filter=all" hx-target="#manage-grid" hx-swap="innerHTML">All</button>
+              <button class="btn btn-secondary btn-sm" hx-get="/api/items/manage?filter=available" hx-target="#manage-grid" hx-swap="innerHTML">Available</button>
+              <button class="btn btn-secondary btn-sm" hx-get="/api/items/manage?filter=sold" hx-target="#manage-grid" hx-swap="innerHTML">Sold</button>
+            </div>
+            <div style="clear: both;"></div>
+          </div>
+
+          <!-- Dynamic Listings loaded via HTMX from Mock Server -->
+          <div class="row" id="manage-grid" hx-get="/api/items/manage" hx-trigger="load" hx-swap="innerHTML">
+            <div style="text-align: center; color: #64748b; padding: 20px; width: 100%;">
+              Loading listings...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      DeBDe &copy; 2026
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

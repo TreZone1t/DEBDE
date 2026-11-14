@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeBDe — Post New Item</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+  <!-- Auth Guard: Redirects immediately to auth.html if not logged in -->
+  <div hx-get="/api/auth/check" hx-trigger="load"></div>
+  <script>
+    if (!document.cookie.includes('debde_token=')) {
+      window.location.href = 'auth.html';
+    }
+  </script>
+
+  <header class="site-header">
+    <div class="container navbar">
+      <div class="brand-logo">DeBDe</div>
+      <ul class="nav-menu">
+        <li><a href="../index.html" class="nav-link">Home</a></li>
+        <li><a href="catalog.html" class="nav-link">Catalog</a></li>
+        <li><a href="manage-listings.html" class="nav-link">Dashboard</a></li>
+        <li><a href="wishlist.html" class="nav-link">Wishlist</a></li>
+        <li id="nav-auth-slot" hx-get="/api/auth/nav" hx-trigger="load" hx-swap="outerHTML">
+          <a href="auth.html" class="btn btn-secondary btn-sm">Sign In</a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="container section-padding">
+    <div class="card" style="max-width: 600px; margin: 0 auto;">
+      <h2 style="margin-bottom: 20px;">List an Item or Textbook</h2>
+      
+      <div id="form-response"></div>
+
+      <!-- HTMX Server-driven Form Submission -->
+      <form hx-post="/api/items" hx-target="#form-response" hx-swap="innerHTML">
+        <div class="form-group">
+          <label class="form-label">Item Title</label>
+          <input type="text" name="title" class="form-control" placeholder="e.g. Engineering Compass Kit" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Faculty / Department</label>
+          <select name="faculty" class="form-control" required>
+            <option value="">Select Faculty</option>
+            <option value="Faculty of Engineering">Engineering</option>
+            <option value="Faculty of Medicine">Medicine</option>
+            <option value="Faculty of CS & IT">Computer Science</option>
+            <option value="Faculty of Pharmacy">Pharmacy</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Price (EGP)</label>
+          <input type="number" id="itemPrice" name="price" class="form-control" placeholder="150" min="0">
+        </div>
+
+        <div class="form-group">
+          <label style="cursor: pointer;">
+            <input type="checkbox" id="isFree" name="isFree"> Free Donation (0 EGP)
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Campus Pickup Location</label>
+          <input type="text" name="pickup" class="form-control" placeholder="e.g. Gate 2 or Central Library" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Additional Description</label>
+          <textarea name="notes" class="form-control" rows="3" placeholder="Condition, term used, included accessories..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Post Listing</button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      DeBDe &copy; 2026
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>
