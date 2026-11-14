@@ -33,3 +33,4 @@
 ### 4. Roles & Permissions (Students, Clubs, Suppliers)
 - [x] Multi-account registration schema in `server.js` and `auth.html` (`student`, `club`, `supplier`).
 - [ ] Role-specific dashboards (e.g. Club accounts managing campus announcements vs Suppliers managing store listings).
+# test
