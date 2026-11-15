@@ -317,5 +317,33 @@ a {
   }
   .nav-menu {
     margin-top: 10px;
-  }
+  }}
+
+  /* Home page - Ahmed */
+.faculty-bar {
+  text-align: center;
+  padding: 15px 0;
 }
+
+.faculty-bar .btn {
+  margin: 4px;
+}
+
+.location-badge {
+  background-color: #e2e8f0;
+  color: #334155;
+  margin: 4px;
+  padding: 4px 12px;
+}
+
+.section-title {
+  margin-bottom: 20px;
+}
+
+.loading-text {
+  text-align: center;
+  color: #64748b;
+  padding: 20px;
+  width: 100%;
+}
+

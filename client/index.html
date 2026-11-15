@@ -30,8 +30,8 @@
 
   <div class="hero-section">
     <div class="container">
-      <h1 class="hero-headline">Campus Peer-to-Peer Tool Exchange</h1>
-      <p class="hero-subtext">Buy, swap, or donate course materials and tools directly on campus</p>
+      <h1 class="hero-headline">Borrow, Share and Succeed at E-JUST</h1>
+      <p class="hero-subtext">Students share calculators, books, lab coats and drawing tools with each other, right on campus.</p>
 
       <form class="search-box" action="pages/catalog.html" method="GET">
         <input type="text" class="search-input" name="q" placeholder="Search for tools, books, or equipment...">
@@ -39,13 +39,28 @@
       </form>
     </div>
   </div>
+  <!-- Faculty quick selector -->
+<div class="container faculty-bar">
+  <a href="pages/catalog.html" class="btn btn-secondary btn-sm">All Faculties</a>
+  <a href="pages/catalog.html?faculty=Engineering" class="btn btn-secondary btn-sm">Engineering</a>
+  <a href="pages/catalog.html?faculty=Computer%20Science%20%26%20IT" class="btn btn-secondary btn-sm">Computer Science &amp; IT</a>
+  <a href="pages/catalog.html?faculty=Medicine%20%26%20Pharmacy" class="btn btn-secondary btn-sm">Medicine &amp; Pharmacy</a>
+  <a href="pages/catalog.html?faculty=Applied%20Health%20Sciences" class="btn btn-secondary btn-sm">Applied Health Sciences</a>
+</div>
+
+<!-- Campus meetup locations -->
+<div class="container faculty-bar">
+  <span class="badge location-badge">Gate 2</span>
+  <span class="badge location-badge">Central Library</span>
+  <span class="badge location-badge">Main Building</span>
+</div>
 
   <div class="container section-padding">
-    <h2 style="margin-bottom: 20px;">Recent Campus Listings</h2>
+    <h2 class="section-title">Recent Campus Listings</h2>
     
     <!-- Dynamic Items loaded via HTMX from Mock Server (No Hardcoded data) -->
     <div class="row" hx-get="/api/items/feed" hx-trigger="load" hx-swap="innerHTML">
-      <div style="text-align: center; color: #64748b; padding: 20px; width: 100%;">
+      <div class="loading-text">
         Loading campus items...
       </div>
     </div>
