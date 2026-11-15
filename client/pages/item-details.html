@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeBDe – Item Details</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .details-wrap { max-width: 720px; margin: 0 auto; padding: 20px; }
+    .item-icon { font-size: 64px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; color: #fff; }
+    .badge-available { background: #2e9e5b; }
+    .badge-sold { background: #888; }
+    .badge-verified { background: #1a73e8; }
+    .section { margin-top: 18px; padding-top: 12px; border-top: 1px solid #eee; }
+    .btn-disabled { pointer-events: none; opacity: .5; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container navbar">
+      <div class="brand-logo">DeBDe</div>
+      <ul class="nav-menu">
+        <li><a href="../index.html" class="nav-link">Home</a></li>
+        <li><a href="catalog.html" class="nav-link active">Catalog</a></li>
+        <li><a href="manage-listings.html" class="nav-link">Dashboard</a></li>
+        <li><a href="wishlist.html" class="nav-link">Wishlist</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="container section-padding">
+    <div class="card details-wrap" id="details">Loading item...</div>
+  </div>
+
+  <footer class="site-footer"><div class="container">DeBDe &copy; 2026</div></footer>
+
+  <script>
+    const MEETUP_SPOTS = ['Gate 2 Security', 'Library Reception', 'Student Activity Hub'];
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    async function loadItem() {
+      const id = new URLSearchParams(location.search).get('id');
+      const box = document.getElementById('details');
+      if (!id) { box.textContent = 'No item selected.'; return; }
+      try {
+        const res = await fetch('/api/catalog/' + encodeURIComponent(id));
+        if (!res.ok) throw new Error();
+        render(await res.json());
+      } catch {
+        box.textContent = 'Could not load this item.';
+      }
+    }
+
+    function render(it) {
+      const available = it.status === 'available';
+      const price = Number(it.price) === 0 ? 'Free (Donation)' : it.price + ' EGP';
+      const history = (it.usageHistory && it.usageHistory.length)
+        ? it.usageHistory.map(h => '<li>' + esc(h) + '</li>').join('')
+        : '<li>No usage history yet.</li>';
+
+      document.getElementById('details').innerHTML = `
+        <a href="catalog.html">← Back to catalog</a>
+        <div class="item-icon">${esc(it.icon || '📚')}</div>
+        <h2>${esc(it.title)}</h2>
+        <span class="badge ${available ? 'badge-available' : 'badge-sold'}">${available ? 'Available' : 'Sold'}</span>
+        <p><strong>${price}</strong></p>
+
+        <p><strong>Course:</strong> ${esc(it.course)}<br>
+           <strong>Term / Semester used:</strong> ${esc(it.term)}<br>
+           <strong>Faculty:</strong> ${esc(it.faculty)}<br>
+           <strong>Condition:</strong> ${esc(it.condition)}${it.conditionNotes ? ' – ' + esc(it.conditionNotes) : ''}<br>
+           <strong>Pickup spot:</strong> ${esc(it.pickupSpot)}</p>
+
+        <p>Owner: ${esc(it.ownerName || 'Student')}
+          ${it.ownerVerified ? '<span class="badge badge-verified">✔ Verified Student</span>' : ''}</p>
+
+        <div class="section">
+          <h3>Usage History</h3>
+          <ul>${history}</ul>
+        </div>
+
+        <div class="section">
+          <h3>Contact &amp; Meetup</h3>
+          <label>Preferred meetup spot:
+            <select id="spot">${MEETUP_SPOTS.map(s => '<option>' + s + '</option>').join('')}</select>
+          </label>
+          <p>
+            <a id="wa-link" class="btn btn-primary ${available ? '' : 'btn-disabled'}" target="_blank" rel="noopener">Contact on WhatsApp</a>
+            <button id="wish-btn" class="btn btn-sm" type="button">♡ Add to Saved Wishlist</button>
+          </p>
+          <p id="wish-msg" style="font-size:13px;"></p>
+        </div>`;
+
+      const updateLink = () => {
+        const spot = document.getElementById('spot').value;
+        const msg = `Hi, I am interested in your listing on DeBDe: "${it.title}". Can we meet at ${spot}?`;
+        document.getElementById('wa-link').href =
+          'https://wa.me/' + encodeURIComponent(it.ownerPhone || '201XXXXXXXXX') + '?text=' + encodeURIComponent(msg);
+      };
+      document.getElementById('spot').addEventListener('change', updateLink);
+      updateLink();
+
+      // Wishlist: Abdulhakim's feature. Adjust the URL if his route differs.
+      document.getElementById('wish-btn').addEventListener('click', async () => {
+        const out = document.getElementById('wish-msg');
+        try {
+          const r = await fetch('/api/catalog/wishlist/' + encodeURIComponent(it.id), { method: 'POST' });
+          out.textContent = r.ok ? 'Saved to your wishlist.' : 'Could not save (are you logged in?).';
+        } catch { out.textContent = 'Wishlist is unavailable right now.'; }
+      });
+    }
+
+    loadItem();
+  </script>
+</body>
+</html>

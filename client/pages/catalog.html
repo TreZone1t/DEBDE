@@ -6,6 +6,11 @@
   <title>DeBDe — Catalog</title>
   <link rel="stylesheet" href="../css/style.css">
   <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <style>
+    .filter-group { margin-bottom: 16px; }
+    .filter-group h4 { margin-bottom: 6px; font-size: 14px; color: #1e3a8a; }
+    .filter-group label { display: block; font-size: 14px; margin-bottom: 4px; }
+  </style>
 </head>
 <body>
 
@@ -25,10 +30,77 @@
   </header>
 
   <div class="container section-padding">
-    <div class="card" style="text-align: center; padding: 40px;">
-      <h2>Browse & Filter Catalog (Subsystem 2)</h2>
-      <p style="color: #64748b; margin: 15px 0;">Designated for Basl Kelg to integrate multi-attribute filter sidebar and items grid.</p>
-      <a href="../index.html" class="btn btn-primary">Return to Home</a>
+    <div class="row">
+
+      <!-- Task 1: Filter sidebar -->
+      <aside class="col-sidebar">
+        <div class="card">
+          <form id="filter-form" hx-get="/api/catalog" hx-target="#catalog-grid" hx-swap="innerHTML">
+            <input type="hidden" name="q" id="q-field" value="">
+
+            <div class="filter-group">
+              <h4>Faculty / Department</h4>
+              <label><input type="checkbox" name="faculty" value="Engineering"> Engineering</label>
+              <label><input type="checkbox" name="faculty" value="CS & IT"> CS &amp; IT</label>
+              <label><input type="checkbox" name="faculty" value="Medicine"> Medicine</label>
+              <label><input type="checkbox" name="faculty" value="Pharmacy"> Pharmacy</label>
+              <label><input type="checkbox" name="faculty" value="Science"> Science</label>
+              <label><input type="checkbox" name="faculty" value="Other"> Other</label>
+            </div>
+
+            <div class="filter-group">
+              <h4>Price Type</h4>
+              <label><input type="radio" name="price" value="all" checked> All</label>
+              <label><input type="radio" name="price" value="free"> Free / Donation Only (0 EGP)</label>
+              <label><input type="radio" name="price" value="paid"> Paid</label>
+            </div>
+
+            <div class="filter-group">
+              <h4>Condition</h4>
+              <label><input type="checkbox" name="condition" value="New"> New</label>
+              <label><input type="checkbox" name="condition" value="Like New"> Like New</label>
+              <label><input type="checkbox" name="condition" value="Used"> Used</label>
+            </div>
+
+            <div class="filter-group">
+              <h4>Sort by</h4>
+              <select name="sort" class="form-control">
+                <option value="newest">Newest First</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;">Apply Filters</button>
+          </form>
+
+          <button type="button" class="btn btn-secondary btn-sm js-open-meetup" style="width: 100%; margin-top: 10px;">
+            📍 Safe Meetup Spots
+          </button>
+        </div>
+      </aside>
+
+      <!-- Task 2: Catalog grid -->
+      <main class="col-main">
+        <div class="row" id="catalog-grid" hx-get="/api/catalog?all=1" hx-trigger="load" hx-swap="innerHTML">
+          <div class="loading-text">Loading catalog items...</div>
+        </div>
+      </main>
+
+    </div>
+  </div>
+
+  <!-- Task 4: Campus meetup modal (uses the shared modal styles) -->
+  <div class="modal-overlay" id="meetupModal">
+    <div class="modal-content">
+      <button type="button" class="modal-close js-close-meetup">&times;</button>
+      <h3 style="margin-bottom: 10px;">Safe Campus Exchange Spots</h3>
+      <ul style="list-style: none; margin-bottom: 10px;">
+        <li>🚪 Gate 2 Security</li>
+        <li>📚 Library Reception</li>
+        <li>🏫 Student Activity Hub</li>
+      </ul>
+      <p style="font-size: 13px; color: #64748b;">Meet in daylight, in busy areas, and check the item before paying.</p>
     </div>
   </div>
 
@@ -39,5 +111,46 @@
   </footer>
 
   <script src="../js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Meetup modal
+      var modal = document.getElementById('meetupModal');
+      document.querySelectorAll('.js-open-meetup').forEach(function (b) {
+        b.addEventListener('click', function () { modal.classList.add('active'); });
+      });
+      document.querySelectorAll('.js-close-meetup').forEach(function (b) {
+        b.addEventListener('click', function () { modal.classList.remove('active'); });
+      });
+      modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('active'); });
+
+      // Links from Home: ?faculty=...  and  ?q=...
+      var params = new URLSearchParams(location.search);
+      var faculty = params.getAll('faculty');
+      var q = params.get('q') || '';
+      if (!faculty.length && !q) return;
+
+      document.getElementById('q-field').value = q;
+
+      // Map Home's faculty names to the sidebar checkboxes
+      var map = {
+        'engineering': ['Engineering'],
+        'computer science & it': ['CS & IT'],
+        'cs & it': ['CS & IT'],
+        'medicine & pharmacy': ['Medicine', 'Pharmacy'],
+        'medicine': ['Medicine'],
+        'pharmacy': ['Pharmacy'],
+        'science': ['Science']
+      };
+      faculty.forEach(function (f) {
+        (map[f.toLowerCase()] || []).forEach(function (v) {
+          var cb = document.querySelector('input[name="faculty"][value="' + v + '"]');
+          if (cb) cb.checked = true;
+        });
+      });
+
+      // Load the grid with the same params the Home page sent
+      htmx.ajax('GET', '/api/catalog?all=1&' + params.toString(), '#catalog-grid');
+    });
+  </script>
 </body>
 </html>

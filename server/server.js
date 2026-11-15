@@ -578,6 +578,8 @@ app.delete("/api/wishlist/:id", authenticateToken, (req, res) => {
   res.send("");
 });
 
+require("./catalog-routes")(app, { getItems: () => items, getUsers: () => users, authenticateToken }); // Subsystem 2 (Basl)
+
 app.listen(PORT, () => {
   console.log(`DeBDe Server running at http://localhost:${PORT}`);
 });
