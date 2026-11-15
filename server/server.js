@@ -27,22 +27,38 @@ try {
   jwt = {
     sign: (payload, secret, options = {}) => {
       const header = { alg: "HS256", typ: "JWT" };
-      const exp = Math.floor(Date.now() / 1000) + (options.expiresIn === "7d" ? 7 * 86400 : 86400);
+      const exp =
+        Math.floor(Date.now() / 1000) +
+        (options.expiresIn === "7d" ? 7 * 86400 : 86400);
       const fullPayload = { ...payload, exp };
-      const b64Header = Buffer.from(JSON.stringify(header)).toString("base64url");
-      const b64Payload = Buffer.from(JSON.stringify(fullPayload)).toString("base64url");
-      const signature = crypto.createHmac("sha256", secret).update(`${b64Header}.${b64Payload}`).digest("base64url");
+      const b64Header = Buffer.from(JSON.stringify(header)).toString(
+        "base64url",
+      );
+      const b64Payload = Buffer.from(JSON.stringify(fullPayload)).toString(
+        "base64url",
+      );
+      const signature = crypto
+        .createHmac("sha256", secret)
+        .update(`${b64Header}.${b64Payload}`)
+        .digest("base64url");
       return `${b64Header}.${b64Payload}.${signature}`;
     },
     verify: (token, secret, callback) => {
       try {
-        if (!token || typeof token !== "string") return callback(new Error("Invalid token"));
+        if (!token || typeof token !== "string")
+          return callback(new Error("Invalid token"));
         const parts = token.split(".");
         if (parts.length !== 3) return callback(new Error("Invalid format"));
         const [b64Header, b64Payload, sig] = parts;
-        const expectedSig = crypto.createHmac("sha256", secret).update(`${b64Header}.${b64Payload}`).digest("base64url");
-        if (sig !== expectedSig) return callback(new Error("Invalid signature"));
-        const payload = JSON.parse(Buffer.from(b64Payload, "base64url").toString("utf8"));
+        const expectedSig = crypto
+          .createHmac("sha256", secret)
+          .update(`${b64Header}.${b64Payload}`)
+          .digest("base64url");
+        if (sig !== expectedSig)
+          return callback(new Error("Invalid signature"));
+        const payload = JSON.parse(
+          Buffer.from(b64Payload, "base64url").toString("utf8"),
+        );
         if (payload.exp && Math.floor(Date.now() / 1000) > payload.exp) {
           return callback(new Error("Token expired"));
         }
@@ -50,7 +66,7 @@ try {
       } catch (err) {
         callback(err);
       }
-    }
+    },
   };
 }
 
@@ -67,7 +83,13 @@ if (fs.existsSync(envPath)) {
 
 const app = express();
 const PORT = process.env.PORT || envConfig.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || envConfig.JWT_SECRET || "debde_student_secret_key_2026";
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  envConfig.JWT_SECRET ||
+  "debde_student_secret_key_2026";
+const DEFAULT_IMAGE = "/assets/debde-icon.png";
+const uploadDirectory = path.join(__dirname, "../client/assets/uploads");
+if (!fs.existsSync(uploadDirectory)) fs.mkdirSync(uploadDirectory, { recursive: true });
 
 app.use(cors());
 app.use(express.json());
@@ -76,7 +98,8 @@ app.use(cookieParser());
 
 // Helper Authentication Middleware
 function authenticateToken(req, res, next) {
-  const token = req.cookies.debde_token || req.headers["authorization"]?.split(" ")[1];
+  const token =
+    req.cookies.debde_token || req.headers["authorization"]?.split(" ")[1];
   if (!token) {
     req.user = null;
     return next();
@@ -96,9 +119,10 @@ const protectedPages = [
   "/pages/manage-listings.html",
   "/pages/wishlist.html",
   "/pages/post-item.html",
+  "/pages/post-announcement.html",
   "/manage-listings.html",
   "/wishlist.html",
-  "/post-item.html"
+  "/post-item.html",
 ];
 
 app.use((req, res, next) => {
@@ -150,7 +174,7 @@ let users = [
     role: "supplier",
     faculty: "Commercial Supplier",
     university: "Alexandria / Borg El Arab",
-  }
+  },
 ];
 
 // Mock Items Store
@@ -166,6 +190,7 @@ let items = [
     pickup: "Campus Gate 2",
     status: "available",
     icon: "📐",
+    image: DEFAULT_IMAGE,
     ownerId: 1,
   },
   {
@@ -179,6 +204,7 @@ let items = [
     pickup: "Central Library Hall",
     status: "available",
     icon: "📚",
+    image: DEFAULT_IMAGE,
     ownerId: 1,
   },
   {
@@ -192,6 +218,7 @@ let items = [
     pickup: "Medical Compound Reception",
     status: "available",
     icon: "🩺",
+    image: DEFAULT_IMAGE,
     ownerId: 2,
   },
   {
@@ -205,7 +232,31 @@ let items = [
     pickup: "Main Building 1",
     status: "sold",
     icon: "💻",
+    image: "/assets/item-casio-real.jpeg",
     ownerId: 1,
+  },
+];
+
+// Demo campus directory. The structure is intentionally data-driven so the
+// Phase 1 mock can grow without changing the selector component.
+const campusDirectory = [
+  {
+    university: "E-JUST",
+    cities: [
+      { city: "New Borg El Arab", campuses: ["Main Campus", "Student Activity Hub"] },
+    ],
+  },
+  {
+    university: "Alexandria University",
+    cities: [
+      { city: "Alexandria", campuses: ["Smouha Campus", "Medical Campus"] },
+    ],
+  },
+  {
+    university: "Cairo University",
+    cities: [
+      { city: "Giza", campuses: ["Main Campus", "Engineering Campus"] },
+    ],
   },
 ];
 
@@ -216,22 +267,48 @@ let announcements = [
     type: "club",
     title: "IEEE CS Student Chapter: Web Programming Sprint & Workshop",
     author: "IEEE CS E-JUST",
-    link: "/pages/catalog.html"
+    link: "/pages/announcement-details.html?id=1",
+    university: "E-JUST",
+    city: "New Borg El Arab",
+    campus: "Main Campus",
+    image: DEFAULT_IMAGE,
   },
   {
     id: 2,
     type: "campus",
     title: "Midterm Drafting Kit & Textbooks Swap at Gate 2",
     author: "Student Union",
-    link: "/pages/catalog.html"
+    link: "/pages/announcement-details.html?id=2",
+    university: "E-JUST",
+    city: "New Borg El Arab",
+    campus: "Student Activity Hub",
+    image: DEFAULT_IMAGE,
   },
   {
     id: 3,
     type: "supplier",
-    title: "Borg El-Arab Bookstore: 20% Discount on Casio Calculators for E-JUST Students",
+    title:
+      "Borg El-Arab Bookstore: 20% Discount on Casio Calculators for E-JUST Students",
     author: "Campus Supplies Partner",
-    link: "/pages/catalog.html"
-  }
+    link: "/pages/announcement-details.html?id=3",
+    university: "Alexandria University",
+    city: "Alexandria",
+    campus: "Smouha Campus",
+    image: DEFAULT_IMAGE,
+  },
+  {
+    id: 4,
+    type: "student project",
+    title: "Jogo Project is back: custom stickers, posters, photocards, and bookmarks are open for orders",
+    description:
+      "Midterms are over. Treat yourself to something made for your laptop, walls, photocard collection, or study desk.",
+    author: "Jogo Project",
+    link: "/pages/announcement-details.html?id=4",
+    university: "E-JUST",
+    city: "New Borg El Arab",
+    campus: "Student Activity Hub",
+    image: "/assets/jojo-stickers.jpeg",
+  },
 ];
 
 // ==========================================
@@ -253,16 +330,19 @@ app.get("/api/auth/check", authenticateToken, (req, res) => {
 app.get("/api/auth/nav", authenticateToken, (req, res) => {
   if (!req.user) {
     return res.send(`
-      <li id="nav-auth-slot"><a href="/pages/auth.html" class="btn btn-primary btn-sm">Sign In</a></li>
+      <div id="nav-auth-slot" class="nav-actions"><a href="/pages/auth.html" class="btn btn-primary btn-sm">Sign In</a></div>
     `);
   }
-  const roleBadge = req.user.role === 'club' ? 'Club' : req.user.role === 'supplier' ? 'Store' : 'Student';
+  const roleBadge =
+    req.user.role === "club"
+      ? "Club"
+      : req.user.role === "supplier"
+        ? "Store"
+        : "Student";
   return res.send(`
-    <li id="nav-auth-slot">
-      <span style="font-size: 13px; color: #334155; margin-right: 8px;"><strong>${req.user.name}</strong> <span class="badge badge-available">${roleBadge}</span></span>
-      <a href="/pages/post-item.html" class="btn btn-primary btn-sm" style="margin-right: 6px;">+ Post Item</a>
-      <button class="btn btn-secondary btn-sm" hx-post="/api/auth/logout" style="color: #ef4444;">Logout</button>
-    </li>
+    <div id="nav-auth-slot" class="nav-actions">
+      <span class="nav-user"><strong>${req.user.name}</strong> <span class="badge badge-available">${roleBadge}</span></span>
+    </div>
   `);
 });
 
@@ -275,7 +355,7 @@ app.post("/api/auth/login", (req, res) => {
 
   if (!user || user.password !== password) {
     return res.status(400).send(`
-      <div style="background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-size: 14px;">
+      <div class="server-alert server-alert-error">
         Invalid email or password. Please try again.
       </div>
     `);
@@ -283,7 +363,13 @@ app.post("/api/auth/login", (req, res) => {
 
   // Issue real JWT
   const token = jwt.sign(
-    { id: user.id, name: user.name, email: user.email, role: user.role || "student", faculty: user.faculty },
+    {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role || "student",
+      faculty: user.faculty,
+    },
     JWT_SECRET,
     { expiresIn: "7d" },
   );
@@ -295,7 +381,7 @@ app.post("/api/auth/login", (req, res) => {
 
   res.setHeader("HX-Redirect", "/pages/manage-listings.html");
   res.send(`
-    <div style="background-color: #dcfce7; color: #15803d; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-size: 14px;">
+    <div class="server-alert server-alert-success">
       Login successful! Redirecting to student dashboard...
     </div>
   `);
@@ -307,7 +393,7 @@ app.post("/api/auth/register", (req, res) => {
 
   if (!email || !password || !name) {
     return res.status(400).send(`
-      <div style="background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-size: 14px;">
+      <div class="server-alert server-alert-error">
         All fields are required.
       </div>
     `);
@@ -318,7 +404,7 @@ app.post("/api/auth/register", (req, res) => {
   );
   if (existing) {
     return res.status(400).send(`
-      <div style="background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-size: 14px;">
+      <div class="server-alert server-alert-error">
         An account with this email already exists.
       </div>
     `);
@@ -353,7 +439,7 @@ app.post("/api/auth/register", (req, res) => {
   });
   res.setHeader("HX-Redirect", "/pages/manage-listings.html");
   res.send(`
-    <div style="background-color: #dcfce7; color: #15803d; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-size: 14px;">
+    <div class="server-alert server-alert-success">
       Account created successfully! Redirecting...
     </div>
   `);
@@ -370,29 +456,35 @@ app.post("/api/auth/logout", (req, res) => {
 app.get("/api/auth/me", authenticateToken, (req, res) => {
   if (!req.user) {
     return res.send(`
-      <div class="card" style="text-align: center;">
-        <p style="color: #64748b; font-size: 14px; margin-bottom: 10px;">Session Expired or Guest</p>
-        <a href="/pages/auth.html" class="btn btn-primary btn-sm" style="width: 100%;">Login with Student Email</a>
+      <div class="card profile-empty">
+        <p class="profile-note">Session Expired or Guest</p>
+        <a href="/pages/auth.html" class="btn btn-primary btn-sm btn-block">Login with Student Email</a>
       </div>
     `);
   }
 
-  const roleTitle = req.user.role === 'club' ? 'Club Representative' : req.user.role === 'supplier' ? 'Campus Supplier' : 'Verified Student';
+  const roleTitle =
+    req.user.role === "club"
+      ? "Club Representative"
+      : req.user.role === "supplier"
+        ? "Campus Supplier"
+        : "Verified Student";
 
   res.send(`
     <div class="card">
       <h3>${req.user.name}</h3>
-      <p style="font-size: 13px; color: #64748b; margin: 5px 0 10px;">${req.user.faculty}</p>
+      <p class="profile-faculty">${req.user.faculty}</p>
       <span class="badge badge-available">${roleTitle}</span>
-      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;">
-      <ul style="list-style: none;">
-        <li style="margin-bottom: 10px;"><a href="/pages/manage-listings.html" style="font-weight: bold; color: #1e3a8a;">My Active Listings</a></li>
-        <li style="margin-bottom: 10px;"><a href="/pages/wishlist.html">Saved Wishlist</a></li>
-        <li style="margin-bottom: 15px;"><a href="/pages/post-item.html">Post New Item</a></li>
+      <hr class="profile-divider">
+      <ul class="profile-links">
+        <li><a href="/pages/manage-listings.html" class="profile-primary-link">My Active Listings</a></li>
+        <li><a href="/pages/wishlist.html">Saved Wishlist</a></li>
+        <li><a href="/pages/post-item.html">+ Add Item</a></li>
+        <li><a href="/pages/post-announcement.html">+ Add Announcement</a></li>
         <li>
           <button 
             class="btn btn-secondary btn-sm" 
-            style="width: 100%; color: #ef4444;"
+            class="btn-block nav-logout"
             hx-post="/api/auth/logout">
             Logout
           </button>
@@ -414,12 +506,14 @@ function renderItemCard(item) {
 
   return `
     <div class="card-item" id="item-${item.id}">
-      <div class="item-img-placeholder">${item.icon || "📦"}</div>
+      <div class="item-img-placeholder">
+        <img class="item-image" src="${item.image || DEFAULT_IMAGE}" alt="">
+      </div>
       <span class="badge ${badgeClass}">${badgeText}</span>
       <div class="item-title">${item.title}</div>
       <div class="item-price">${priceDisplay}</div>
-      <p style="font-size: 13px; color: #64748b; margin-bottom: 10px;">${item.faculty} — ${item.pickup}</p>
-      <a href="/pages/catalog.html?id=${item.id}" class="btn btn-primary" style="width: 100%;">View Details</a>
+      <p class="item-meta">${item.faculty} — ${item.pickup}</p>
+      <a href="/pages/item-details.html?id=${item.id}" class="btn btn-primary btn-block">View Details</a>
     </div>
   `;
 }
@@ -433,11 +527,13 @@ function renderManageCard(item) {
 
   return `
     <div class="card-item" id="manage-item-${item.id}">
-      <div class="item-img-placeholder">${item.icon || "📦"}</div>
+      <div class="item-img-placeholder">
+        <img class="item-image" src="${item.image || DEFAULT_IMAGE}" alt="">
+      </div>
       <span class="badge ${badgeClass}">${badgeText}</span>
       <div class="item-title">${item.title}</div>
       <div class="item-price">${item.isFree ? "Free" : item.price + " EGP"}</div>
-      <div style="margin-top: 10px;">
+      <div class="manage-actions">
         <button 
           class="btn ${toggleBtnClass} btn-sm"
           hx-post="/api/items/${item.id}/toggle-status"
@@ -447,7 +543,7 @@ function renderManageCard(item) {
         </button>
         <button 
           class="btn btn-secondary btn-sm" 
-          style="color: #ef4444;"
+          class="nav-logout"
           hx-delete="/api/items/${item.id}"
           hx-target="#manage-item-${item.id}"
           hx-swap="outerHTML">
@@ -458,16 +554,101 @@ function renderManageCard(item) {
   `;
 }
 
-// Announcements API
+// Campus directory API used by the Home selector.
+app.get("/api/campus/options", (req, res) => {
+  res.json(campusDirectory);
+});
+
+// Announcements API. Filters are optional so the Home page has a useful
+// default while still supporting University -> City -> Campus selection.
 app.get("/api/announcements", (req, res) => {
-  const item = announcements[0];
+  const university = String(req.query.university || "").trim();
+  const city = String(req.query.city || "").trim();
+  const campus = String(req.query.campus || "").trim();
+  const filtered = announcements.filter((announcement) => {
+    return (!university || announcement.university === university)
+      && (!city || announcement.city === city)
+      && (!campus || announcement.campus === campus);
+  });
+  const item = filtered[0] || announcements[0];
   res.send(`
-    <div style="background-color: #1e3a8a; color: #ffffff; padding: 8px 0; font-size: 13px; text-align: center;">
+    <div class="announcement-bar" data-university="${item.university}" data-city="${item.city}" data-campus="${item.campus}">
       <div class="container">
-        📢 <strong>[${item.author}]</strong> ${item.title} — <a href="${item.link}" style="color: #67e8f9; text-decoration: underline; margin-left: 8px;">View Details &rarr;</a>
+        <img class="announcement-image" src="${item.image}" alt="">
+        <span><strong>[${item.author}]</strong> ${item.title} <small>${item.city} · ${item.campus}</small></span>
+        <a href="${item.link}" class="announcement-link">View Details &rarr;</a>
       </div>
     </div>
   `);
+});
+
+app.get("/api/announcements/list", (req, res) => {
+  const university = String(req.query.university || "").trim();
+  const city = String(req.query.city || "").trim();
+  const campus = String(req.query.campus || "").trim();
+  const filtered = announcements.filter((announcement) => {
+    return (!university || announcement.university === university)
+      && (!city || announcement.city === city)
+      && (!campus || announcement.campus === campus);
+  });
+  res.json(filtered.length ? filtered : announcements);
+});
+
+app.get("/api/announcements/manage", authenticateToken, (req, res) => {
+  if (!req.user) return res.status(401).send("");
+  const mine = announcements.filter((announcement) => announcement.author === req.user.name);
+  res.send(mine.length ? mine.map(renderAnnouncementManageCard).join("") : '<div class="loading-text">No announcements yet.</div>');
+});
+
+app.get("/api/announcements/:id", (req, res) => {
+  const announcement = announcements.find((item) => item.id === parseInt(req.params.id));
+  if (!announcement) return res.status(404).json({ error: "Announcement not found" });
+  res.json(announcement);
+});
+
+function renderAnnouncementManageCard(announcement) {
+  return `
+    <div class="card-item announcement-manage-card">
+      <div class="item-img-placeholder">
+        <img class="item-image" src="${announcement.image || DEFAULT_IMAGE}" alt="">
+      </div>
+      <span class="announcement-type">${announcement.type}</span>
+      <div class="item-title">${announcement.title}</div>
+      <p class="item-meta">${announcement.city} · ${announcement.campus}</p>
+      <a class="btn btn-primary btn-block" href="${announcement.link}">View Details</a>
+    </div>`;
+}
+
+app.post("/api/announcements", authenticateToken, (req, res) => {
+  if (!req.user) {
+    res.setHeader("HX-Redirect", "/pages/auth.html");
+    return res.status(401).send("");
+  }
+  const { title, type, description, city, campus, imageData } = req.body;
+  let image = DEFAULT_IMAGE;
+  if (typeof imageData === "string" && imageData.startsWith("data:image/")) {
+    const match = imageData.match(/^data:image\/(png|jpeg|jpg|webp);base64,(.+)$/);
+    if (match && Buffer.byteLength(match[2], "base64") <= 5 * 1024 * 1024) {
+      const extension = match[1] === "jpg" ? "jpeg" : match[1];
+      const fileName = `announcement-${Date.now()}.${extension}`;
+      fs.writeFileSync(path.join(uploadDirectory, fileName), Buffer.from(match[2], "base64"));
+      image = `/assets/uploads/${fileName}`;
+    }
+  }
+  const announcement = {
+    id: announcements.length ? Math.max(...announcements.map((item) => item.id)) + 1 : 1,
+    type: type || (req.user.role === "club" ? "club" : "student project"),
+    title: title || "Campus announcement",
+    description: description || "",
+    author: req.user.name,
+    link: `/pages/announcement-details.html?id=${announcements.length ? Math.max(...announcements.map((item) => item.id)) + 1 : 1}`,
+    university: req.user.university || "E-JUST",
+    city: city || "New Borg El Arab",
+    campus: campus || "Main Campus",
+    image,
+  };
+  announcements.push(announcement);
+  res.send(`<div class="server-alert server-alert-success">Announcement published successfully. <a class="alert-link" href="/pages/announcement-details.html?id=${announcement.id}">View announcement</a></div>`);
 });
 
 // Feed for Home
@@ -484,8 +665,9 @@ app.get("/api/items/manage", authenticateToken, (req, res) => {
     return res.status(401).send("");
   }
   const filter = req.query.filter || "all";
-  let filtered = items;
-  if (filter === "available") filtered = items.filter((i) => i.status === "available");
+  let filtered = items.filter((item) => item.ownerId === req.user.id);
+  if (filter === "available")
+    filtered = items.filter((i) => i.status === "available");
   if (filter === "sold") filtered = items.filter((i) => i.status === "sold");
 
   const html = filtered.map(renderManageCard).join("");
@@ -516,7 +698,17 @@ app.post("/api/items", authenticateToken, (req, res) => {
     res.setHeader("HX-Redirect", "/pages/auth.html");
     return res.status(401).send("");
   }
-  const { title, faculty, price, isFree, pickup, notes } = req.body;
+  const { title, faculty, price, isFree, pickup, notes, imageData } = req.body;
+  let image = DEFAULT_IMAGE;
+  if (typeof imageData === "string" && imageData.startsWith("data:image/")) {
+    const match = imageData.match(/^data:image\/(png|jpeg|jpg|webp);base64,(.+)$/);
+    if (match && Buffer.byteLength(match[2], "base64") <= 5 * 1024 * 1024) {
+      const extension = match[1] === "jpg" ? "jpeg" : match[1];
+      const fileName = `listing-${Date.now()}.${extension}`;
+      fs.writeFileSync(path.join(uploadDirectory, fileName), Buffer.from(match[2], "base64"));
+      image = `/assets/uploads/${fileName}`;
+    }
+  }
   const newItem = {
     id: items.length + 1,
     title: title || "Untitled Tool",
@@ -528,13 +720,14 @@ app.post("/api/items", authenticateToken, (req, res) => {
     pickup: pickup || "Main Gate",
     status: "available",
     icon: "📦",
+    image,
     ownerId: req.user.id,
   };
   items.unshift(newItem);
   res.send(`
-    <div style="background-color: #dcfce7; color: #15803d; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+    <div class="server-alert server-alert-success server-alert-large">
       ✓ Item <strong>"${newItem.title}"</strong> has been listed successfully! 
-      <a href="/pages/manage-listings.html" style="text-decoration: underline; font-weight: bold; margin-left: 10px;">Go to Dashboard &rarr;</a>
+      <a href="/pages/manage-listings.html" class="alert-link">Go to Dashboard &rarr;</a>
     </div>
   `);
 });
@@ -544,7 +737,7 @@ app.get("/api/wishlist", authenticateToken, (req, res) => {
   if (!req.user) {
     res.setHeader("HX-Redirect", "/pages/auth.html");
     return res.status(401).send(`
-      <div style="text-align: center; color: #64748b; padding: 20px;">
+      <div class="loading-text">
         Please sign in to view your saved wishlist.
       </div>
     `);
@@ -554,13 +747,15 @@ app.get("/api/wishlist", authenticateToken, (req, res) => {
     .map(
       (item) => `
     <div class="card-item" id="wishlist-${item.id}">
-      <div class="item-img-placeholder">${item.icon || "📦"}</div>
+      <div class="item-img-placeholder">
+        <img class="item-image" src="${item.image || DEFAULT_IMAGE}" alt="">
+      </div>
       <div class="item-title">${item.title}</div>
       <div class="item-price">${item.isFree ? "Free" : item.price + " EGP"}</div>
-      <a href="https://wa.me/201551353638" target="_blank" class="btn btn-primary btn-sm" style="display: block; margin-bottom: 5px;">Contact WhatsApp</a>
+      <a href="https://wa.me/201551353638" target="_blank" class="btn btn-primary btn-sm contact-link">Contact WhatsApp</a>
       <button 
         class="btn btn-secondary btn-sm" 
-        style="width: 100%; color: #ef4444;"
+        class="btn-block nav-logout"
         hx-delete="/api/wishlist/${item.id}"
         hx-target="#wishlist-${item.id}"
         hx-swap="outerHTML">
@@ -578,7 +773,11 @@ app.delete("/api/wishlist/:id", authenticateToken, (req, res) => {
   res.send("");
 });
 
-require("./catalog-routes")(app, { getItems: () => items, getUsers: () => users, authenticateToken }); // Subsystem 2 (Basl)
+require("./catalog-routes")(app, {
+  getItems: () => items,
+  getUsers: () => users,
+  authenticateToken,
+}); // Subsystem 2 (Basl)
 
 app.listen(PORT, () => {
   console.log(`DeBDe Server running at http://localhost:${PORT}`);

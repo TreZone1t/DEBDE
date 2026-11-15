@@ -22,12 +22,14 @@ module.exports = function catalogRoutes(app, ctx) {
     const sold = i.status === "sold";
     return `
     <div class="card-item" id="catalog-item-${esc(i.id)}">
-      <div class="item-img-placeholder">${esc(i.icon || "📦")}</div>
+      <div class="item-img-placeholder">
+        <img class="item-image" src="${esc(i.image || "/assets/debde-icon.png")}" alt="">
+      </div>
       <span class="badge ${sold ? "badge-sold" : "badge-available"}">${sold ? "Sold" : "Available"}</span>
       <div class="item-title">${esc(i.title)}</div>
       <div class="item-price">${isFree(i) ? "Free (Donation)" : esc(i.price) + " EGP"}</div>
-      <p style="font-size: 13px; color: #64748b; margin-bottom: 10px;">${esc(i.faculty)} — ${esc(i.pickup)}</p>
-      <a href="/pages/item-details.html?id=${encodeURIComponent(i.id)}" class="btn btn-primary" style="width: 100%;">View Details</a>
+      <p class="item-meta">${esc(i.faculty)} — ${esc(i.pickup)}</p>
+      <a href="/pages/item-details.html?id=${encodeURIComponent(i.id)}" class="btn btn-primary btn-block">View Details</a>
     </div>`;
   }
 
@@ -78,6 +80,7 @@ module.exports = function catalogRoutes(app, ctx) {
       id: item.id,
       title: item.title,
       icon: item.icon,
+      image: item.image,
       status: item.status,
       price: isFree(item) ? 0 : item.price,
       faculty: item.faculty,

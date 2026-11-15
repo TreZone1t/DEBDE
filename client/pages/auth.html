@@ -1,47 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DeBDe — Student Authentication</title>
   <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.css" integrity="sha512-x9WwyMYBnlXMNQ6kQ/Lyzu1NqIhLQKL5Oq6xByfXuRj7s9CskyCbLv/1IjqzJmXwFXWr0ov6jBV7Qbc0hh9nHg==" crossorigin="anonymous" referrerpolicy="no-referrer">
   <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
+
 <body>
 
   <header class="site-header">
     <div class="container navbar">
-      <div class="brand-logo">DeBDe</div>
-      <ul class="nav-menu">
-        <li><a href="../index.html" class="nav-link">Home</a></li>
+      <a class="brand-logo" href="../index.html" aria-label="DEBDE Student Tool Exchange">
+        <img src="../assets/debde-icon.png" alt="DEBDE" />
+        <span>DEBDE <small>Student Tool Exchange</small></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+      <ul class="nav-menu" id="primary-nav">
         <li><a href="catalog.html" class="nav-link">Catalog</a></li>
         <li><a href="manage-listings.html" class="nav-link">Dashboard</a></li>
         <li><a href="wishlist.html" class="nav-link">Wishlist</a></li>
-        <!-- Dynamic Navbar Auth Slot (Solves Sign In persisting bug) -->
-        <li id="nav-auth-slot" hx-get="/api/auth/nav" hx-trigger="load" hx-swap="outerHTML">
-          <a href="auth.html" class="btn btn-secondary btn-sm">Sign In</a>
-        </li>
       </ul>
+      <div id="nav-auth-slot" class="nav-actions" hx-get="/api/auth/nav" hx-trigger="load" hx-swap="outerHTML">
+        <a href="auth.html" class="btn btn-secondary btn-sm">Sign In</a>
+      </div>
     </div>
   </header>
 
   <div class="container section-padding">
-    <div class="card" style="max-width: 500px; margin: 40px auto; padding: 25px;">
-      
+    <div class="card auth-card">
+
       <!-- Auth Switcher Tabs -->
-      <div style="border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; text-align: center;">
-        <button 
-          id="tab-login-btn" 
-          class="btn btn-secondary" 
-          style="border: none; border-bottom: 2px solid #1e3a8a; border-radius: 0; margin-right: 10px; font-weight: bold; color: #1e3a8a;"
-          onclick="showTab('login')">
+      <div class="auth-tabs">
+        <button id="tab-login-btn" class="btn btn-secondary auth-tab is-active" type="button">
           Sign In
         </button>
-        <button 
-          id="tab-register-btn" 
-          class="btn btn-secondary" 
-          style="border: none; border-bottom: 2px solid transparent; border-radius: 0; color: #64748b;"
-          onclick="showTab('register')">
+        <button id="tab-register-btn" class="btn btn-secondary auth-tab" type="button">
           Create Account
         </button>
       </div>
@@ -51,40 +48,30 @@
 
       <!-- Tab 1: Login Form (Subsystem 3 Auth) -->
       <div id="login-section">
-        <h2 style="font-size: 20px; margin-bottom: 5px;">Campus Sign In</h2>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">
+        <h2 class="auth-title">Campus Sign In</h2>
+        <p class="auth-intro">
           Sign in using your student email, club account, or supplier credentials.
         </p>
 
         <form hx-post="/api/auth/login" hx-target="#auth-alert" hx-swap="innerHTML">
           <div class="form-group">
             <label class="form-label">Email Address</label>
-            <input 
-              type="email" 
-              name="email" 
-              class="form-control" 
-              placeholder="e.g. student@ejust.edu.eg" 
-              value="student@ejust.edu.eg" 
-              required>
+            <input type="email" name="email" class="form-control" placeholder="e.g. student@ejust.edu.eg"
+              value="student@ejust.edu.eg" required>
           </div>
 
           <div class="form-group">
             <label class="form-label">Password</label>
-            <input 
-              type="password" 
-              name="password" 
-              class="form-control" 
-              placeholder="••••••••" 
-              value="password123" 
+            <input type="password" name="password" class="form-control" placeholder="••••••••" value="password123"
               required>
           </div>
 
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+          <button type="submit" class="btn btn-primary btn-block auth-submit">
             Sign In with JWT Session
           </button>
         </form>
 
-        <div style="margin-top: 15px; padding: 10px; background-color: #f1f5f9; border-radius: 4px; font-size: 12px; color: #475569;">
+        <div class="demo-accounts">
           <strong>Demo Test Accounts:</strong><br>
           • Student: <code>student@ejust.edu.eg</code> (Password: <code>password123</code>)<br>
           • Club Chapter: <code>ieee@ejust.edu.eg</code> (Password: <code>clubpassword</code>)<br>
@@ -93,17 +80,18 @@
       </div>
 
       <!-- Tab 2: Register Form (Subsystem 3 Verification) -->
-      <div id="register-section" style="display: none;">
-        <h2 style="font-size: 20px; margin-bottom: 5px;">Create New Account</h2>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">
+      <div id="register-section" class="is-hidden">
+        <h2 class="auth-title">Create New Account</h2>
+        <p class="auth-intro">
           Register as an individual student, student club, or campus supplier.
         </p>
 
         <form hx-post="/api/auth/register" hx-target="#auth-alert" hx-swap="innerHTML">
-          
+
           <div class="form-group">
             <label class="form-label">Account Type</label>
-            <select name="role" id="accountRole" class="form-control" required onchange="toggleAccountFields(this.value)">
+            <select name="role" id="accountRole" class="form-control" required
+              >
               <option value="student">Student (Peer-to-Peer Exchange)</option>
               <option value="club">Student Club / Campus Organization</option>
               <option value="supplier">Campus Supplier / Bookstore</option>
@@ -112,28 +100,17 @@
 
           <div class="form-group">
             <label class="form-label" id="nameLabel">Full Name</label>
-            <input 
-              type="text" 
-              name="name" 
-              id="nameInput"
-              class="form-control" 
-              placeholder="e.g. Omar Tarek" 
-              required>
+            <input type="text" name="name" id="nameInput" class="form-control" placeholder="e.g. Omar Tarek" required>
           </div>
 
           <div class="form-group">
             <label class="form-label">Email Address</label>
-            <input 
-              type="email" 
-              name="email" 
-              class="form-control" 
-              placeholder="user@ejust.edu.eg" 
-              required>
+            <input type="email" name="email" class="form-control" placeholder="user@ejust.edu.eg" required>
           </div>
 
           <div class="form-group" id="facultyGroup">
             <label class="form-label">Faculty / Department</label>
-            <select name="faculty" id="facultySelect" class="form-control" onchange="toggleCustomFaculty(this.value)">
+            <select name="faculty" id="facultySelect" class="form-control">
               <option value="Faculty of CS & IT">Faculty of Computer Science & IT</option>
               <option value="Faculty of Engineering">Faculty of Engineering</option>
               <option value="Faculty of Medicine">Faculty of Medicine</option>
@@ -142,25 +119,16 @@
               <option value="Faculty of Applied Health Sciences">Faculty of Applied Health Sciences</option>
               <option value="OTHER">Other Faculty / Institute (Specify below)</option>
             </select>
-            <input 
-              type="text" 
-              id="customFacultyInput" 
-              placeholder="Enter your custom faculty name" 
-              class="form-control" 
-              style="margin-top: 8px; display: none;">
+            <input type="text" id="customFacultyInput" placeholder="Enter your custom faculty name" class="form-control"
+              class="is-hidden custom-faculty-input">
           </div>
 
           <div class="form-group">
             <label class="form-label">Password</label>
-            <input 
-              type="password" 
-              name="password" 
-              class="form-control" 
-              placeholder="Choose a secure password" 
-              required>
+            <input type="password" name="password" class="form-control" placeholder="Choose a secure password" required>
           </div>
 
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+          <button type="submit" class="btn btn-primary btn-block auth-submit">
             Create Account & Verify
           </button>
         </form>
@@ -175,66 +143,8 @@
     </div>
   </footer>
 
-  <script>
-    function showTab(tab) {
-      var loginSec = document.getElementById('login-section');
-      var regSec = document.getElementById('register-section');
-      var loginBtn = document.getElementById('tab-login-btn');
-      var regBtn = document.getElementById('tab-register-btn');
-      var alertBox = document.getElementById('auth-alert');
-      alertBox.innerHTML = '';
-
-      if (tab === 'login') {
-        loginSec.style.display = 'block';
-        regSec.style.display = 'none';
-        loginBtn.style.color = '#1e3a8a';
-        loginBtn.style.borderBottom = '2px solid #1e3a8a';
-        loginBtn.style.fontWeight = 'bold';
-        regBtn.style.color = '#64748b';
-        regBtn.style.borderBottom = '2px solid transparent';
-        regBtn.style.fontWeight = 'normal';
-      } else {
-        loginSec.style.display = 'none';
-        regSec.style.display = 'block';
-        regBtn.style.color = '#1e3a8a';
-        regBtn.style.borderBottom = '2px solid #1e3a8a';
-        regBtn.style.fontWeight = 'bold';
-        loginBtn.style.color = '#64748b';
-        loginBtn.style.borderBottom = '2px solid transparent';
-        loginBtn.style.fontWeight = 'normal';
-      }
-    }
-
-    function toggleAccountFields(role) {
-      var nameLabel = document.getElementById('nameLabel');
-      var nameInput = document.getElementById('nameInput');
-      var facultyGroup = document.getElementById('facultyGroup');
-
-      if (role === 'club') {
-        nameLabel.innerText = 'Club / Organization Name';
-        nameInput.placeholder = 'e.g. IEEE CS Student Chapter';
-        facultyGroup.style.display = 'none';
-      } else if (role === 'supplier') {
-        nameLabel.innerText = 'Store / Supplier Name';
-        nameInput.placeholder = 'e.g. Campus Engineering Bookshop';
-        facultyGroup.style.display = 'none';
-      } else {
-        nameLabel.innerText = 'Full Name';
-        nameInput.placeholder = 'e.g. Omar Tarek';
-        facultyGroup.style.display = 'block';
-      }
-    }
-
-    function toggleCustomFaculty(val) {
-      var customInput = document.getElementById('customFacultyInput');
-      if (val === 'OTHER') {
-        customInput.style.display = 'block';
-        customInput.required = true;
-      } else {
-        customInput.style.display = 'none';
-        customInput.required = false;
-      }
-    }
-  </script>
+  <script src="../js/main.js"></script>
+  <script src="../js/auth.js"></script>
 </body>
+
 </html>
